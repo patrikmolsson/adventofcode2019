@@ -33,15 +33,12 @@ function getParamMode(operationAsString, index) {
   return Number.isNaN(n) ? 0 : n;
 }
 
-
-
-module.exports = function createAmp(phaseSetting, numbers) {
-  let usedPhaseSetting = false;
+module.exports = function createAmp(numbers) {
   let i = 0;
   let relativeBase = 0;
 
   return function intCode(inputSignal) {
-    while (i < numbers.length) {
+    while (true) {
       const operationCode = numbers[i] % 100;
 
       const operationAsString = `${numbers[i]}`;
@@ -50,25 +47,15 @@ module.exports = function createAmp(phaseSetting, numbers) {
       const firstParam = getParamValue(firstParamMode, numbers[i + 1], numbers, relativeBase);
       const secondParam = getParamValue(secondParamMode, numbers[i + 2], numbers, relativeBase);
 
-      function setOutputParam(paramIndex, value) {
-        if (operationCode === OPC.INP) {
-          console.log('>>> INPUT');
-          console.log(operationAsString);
-          console.log(numbers[i + 1]);
-          console.log(firstParam);
-          console.log('relBase', relativeBase);
-          console.log('output', numbers[firstParam + relativeBase]);
-        }
-
-        let indexToSet = numbers[i + paramIndex];
+      function setParam(paramIndex, value) {
+        let indexToSet = numbers[i + paramIndex] || 0;
 
         if (getParamMode(operationAsString, paramIndex) === PARAM_MODES.REL) {
           indexToSet += relativeBase;
         }
 
-        console.log('Setting idx', indexToSet, 'to', value, firstParam, relativeBase);
         numbers[indexToSet] = value;
-        console.log('After set', numbers[indexToSet]);
+
       }
 
       let amountOfParams;
@@ -76,22 +63,22 @@ module.exports = function createAmp(phaseSetting, numbers) {
       switch (operationCode) {
         case OPC.ADD:
           amountOfParams = 3;
-          setOutputParam(amountOfParams, firstParam * secondParam);
+          setParam(amountOfParams, firstParam * secondParam);
           break;
         case OPC.MULT:
           amountOfParams = 3;
-          setOutputParam(amountOfParams, firstParam * secondParam);
+          setParam(amountOfParams, firstParam * secondParam);
           break;
         case OPC.INP:
           amountOfParams = 1;
 
-          setOutputParam(amountOfParams, usedPhaseSetting ? inputSignal : phaseSetting);
-          usedPhaseSetting = true;
+          setParam(amountOfParams, inputSignal);
           break;
         case OPC.OUT:
           amountOfParams = 1;
 
           i += amountOfParams + 1;
+
           return firstParam;
         case OPC.JUMP_IF_TRUE:
           amountOfParams = 2;
@@ -110,12 +97,12 @@ module.exports = function createAmp(phaseSetting, numbers) {
           break;
         case OPC.LESS_THAN:
           amountOfParams = 3;
-          setOutputParam(amountOfParams, firstParam < secondParam ? 1 : 0);
+          setParam(amountOfParams, firstParam < secondParam ? 1 : 0);
           break;
         case OPC.EQUALS:
           amountOfParams = 3;
 
-          setOutputParam(amountOfParams, firstParam === secondParam ? 1 : 0);
+          setParam(amountOfParams, firstParam === secondParam ? 1 : 0);
           break;
         case OPC.REL_BASE_OFFSET:
           amountOfParams = 1;
