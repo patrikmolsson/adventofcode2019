@@ -55,7 +55,6 @@ module.exports = function createAmp(numbers) {
         }
 
         numbers[indexToSet] = value;
-
       }
 
       let amountOfParams;
@@ -63,7 +62,7 @@ module.exports = function createAmp(numbers) {
       switch (operationCode) {
         case OPC.ADD:
           amountOfParams = 3;
-          setParam(amountOfParams, firstParam * secondParam);
+          setParam(amountOfParams, firstParam + secondParam);
           break;
         case OPC.MULT:
           amountOfParams = 3;
