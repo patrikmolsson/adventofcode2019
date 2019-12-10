@@ -5,27 +5,67 @@ const chars = {
     SHOT: 'z',
     EMPTY: '.',
 };
-const inputRaw = `.#..##.###...#######
-##.############..##.
-.#.######.########.#
-.###.#######.####.#.
-#####.##.#.##.###.##
-..#####..#.#########
-####################
-#.####....###.#.#.##
-##.#################
-#####.##.###..####..
-..######..##.#######
-####.##.####...##..#
-.#####..#.######.###
-##...#.##########...
-#.##########.#######
-.####.#.###.###.#.##
-....##.##.###..#####
-.#.#.###########.###
-#.#.#.#####.####.###
-###.##.####.##.#..##`;
+// const inputRaw = `.#..##.###...#######
+// ##.############..##.
+// .#.######.########.#
+// .###.#######.####.#.
+// #####.##.#.##.###.##
+// ..#####..#.#########
+// ####################
+// #.####....###.#.#.##
+// ##.#################
+// #####.##.###..####..
+// ..######..##.#######
+// ####.##.####...##..#
+// .#####..#.######.###
+// ##...#.##########...
+// #.##########.#######
+// .####.#.###.###.#.##
+// ....##.##.###..#####
+// .#.#.###########.###
+// #.#.#.#####.####.###
+// ###.##.####.##.#..##`;
+const inputRaw = `.............#..#.#......##........#..#
+.#...##....#........##.#......#......#.
+..#.#.#...#...#...##.#...#.............
+.....##.................#.....##..#.#.#
+......##...#.##......#..#.......#......
+......#.....#....#.#..#..##....#.......
+...................##.#..#.....#.....#.
+#.....#.##.....#...##....#####....#.#..
+..#.#..........#..##.......#.#...#....#
+...#.#..#...#......#..........###.#....
+##..##...#.#.......##....#.#..#...##...
+..........#.#....#.#.#......#.....#....
+....#.........#..#..##..#.##........#..
+........#......###..............#.#....
+...##.#...#.#.#......#........#........
+......##.#.....#.#.....#..#.....#.#....
+..#....#.###..#...##.#..##............#
+...##..#...#.##.#.#....#.#.....#...#..#
+......#............#.##..#..#....##....
+.#.#.......#..#...###...........#.#.##.
+........##........#.#...#.#......##....
+.#.#........#......#..........#....#...
+...............#...#........##..#.#....
+.#......#....#.......#..#......#.......
+.....#...#.#...#...#..###......#.##....
+.#...#..##................##.#.........
+..###...#.......#.##.#....#....#....#.#
+...#..#.......###.............##.#.....
+#..##....###.......##........#..#...#.#
+.#......#...#...#.##......#..#.........
+#...#.....#......#..##.............#...
+...###.........###.###.#.....###.#.#...
+#......#......#.#..#....#..#.....##.#..
+.##....#.....#...#.##..#.#..##.......#.
+..#........#.......##.##....#......#...
+##............#....#.#.....#...........
+........###.............##...#........#
+#.........#.....#..##.#.#.#..#....#....
+..............##.#.#.#...........#.....`;
 const input = inputRaw.split('\n');
+let station = [26, 29];
 function mapAsteroids() {
     const ast = [];
     let rowIndex = 0;
@@ -42,37 +82,25 @@ function mapAsteroids() {
     return ast;
 }
 let asteroids = mapAsteroids();
+function normalizeAngle(angle) {
+    if (angle < 0) {
+        return 2 * Math.PI + angle;
+    }
+    return angle;
+}
 function calculateK([fromX, fromY], [toX, toY]) {
     const coords = [toX, toY];
-    const distance = Math.sqrt(Math.pow(fromX - toX, 2) + Math.pow(fromY - toY, 2));
-    let direction;
-    if (fromX < toX) {
-        direction = 'RIGHT';
-    }
-    else if (fromX > toX) {
-        direction = 'LEFT';
-    }
-    else {
-        direction = fromY < toY ? 'LEFT' : 'RIGHT';
-    }
-    if (fromX === toX) {
-        const slope = direction === 'RIGHT' ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER;
-        return { distance, direction, slope, coords };
-    }
-    if (fromY === toY) {
-        return { distance, direction, slope: 0, coords };
-    }
-    // This is wrong, but doesnt matter
-    const slope = (fromY - toY) / (fromX - toX);
+    const distX = toX - fromX;
+    const distY = toY - fromY;
+    const distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+    let angle = Math.atan2(distY, distX);
+    angle = normalizeAngle(angle);
     return {
+        angle,
         coords,
-        slope,
-        direction,
         distance,
     };
 }
-let maxCount = -1;
-let station = [11, 13];
 function getClosestAsteroids() {
     let ks = [];
     for (const asteroidTo of asteroids) {
@@ -80,42 +108,34 @@ function getClosestAsteroids() {
             continue;
         }
         const k = calculateK(station, asteroidTo);
-        const existingKsIndex = ks.findIndex(existingK => existingK.direction === k.direction && existingK.slope === k.slope);
-        if (existingKsIndex > -1) {
-            if (k.distance < ks[existingKsIndex].distance) {
-                ks[existingKsIndex] = k;
+        const asteroidAtExistingAngleIndex = ks.findIndex(existingK => existingK.angle === k.angle);
+        if (asteroidAtExistingAngleIndex > -1) {
+            if (k.distance < ks[asteroidAtExistingAngleIndex].distance) {
+                ks[asteroidAtExistingAngleIndex] = k;
             }
-            continue;
         }
-        ks.push(k);
+        else {
+            ks.push(k);
+        }
     }
     return ks;
 }
 let shotAsteroids = 0;
+// Dummy
+let angleDiff = 0.000001;
+let lastShotAngle = 1.5 * Math.PI - angleDiff;
 while (shotAsteroids < 200) {
+    console.log(lastShotAngle);
     const closestAsteroids = getClosestAsteroids();
-    console.log(closestAsteroids.length);
     closestAsteroids.sort((a, b) => {
-        if (a.direction !== b.direction) {
-            // Rights are lower index
-            return a.direction === 'RIGHT' ? -1 : 1;
-        }
-        // Both have right
-        if (a.direction === 'RIGHT') {
-            // The biggest slope first 
-            return a.slope > b.slope ? -1 : 1;
-        }
-        // Both have left
-        if (a.direction === 'LEFT') {
-            // The smallest slope first 
-            return a.slope < b.slope ? -1 : 1;
-        }
-        throw new Error('Should never happen');
+        const angleToA = normalizeAngle(a.angle - lastShotAngle);
+        const angleToB = normalizeAngle(b.angle - lastShotAngle);
+        return angleToA - angleToB;
     });
+    // console.log(closestAsteroids);
     const shotAsteroid = closestAsteroids[0];
-    console.log(asteroids.length);
     asteroids = asteroids.filter(a => a[0] !== shotAsteroid.coords[0] || a[1] !== shotAsteroid.coords[1]);
-    console.log(asteroids.length);
+    lastShotAngle = shotAsteroid.angle + angleDiff;
     shotAsteroids += 1;
     console.log('Shot asteroid', shotAsteroid, 'as #', shotAsteroids);
 }

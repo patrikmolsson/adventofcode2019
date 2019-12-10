@@ -80,7 +80,6 @@ for (const row of input) {
     }
     rowIndex += 1;
 }
-console.log(asteroids);
 function calculateK([fromX, fromY], [toX, toY]) {
     let direction;
     if (fromX < toX) {
@@ -119,11 +118,7 @@ for (const asteroidFrom of asteroids) {
         }
         ks.push(k);
     }
-    if (asteroidFrom[0] === 5 && asteroidFrom[1] === 8) {
-        console.log(">>> 5, 8", ks, ks.length, asteroidFrom);
-    }
     if (ks.length > maxCount) {
-        console.log(ks, ks.length, asteroidFrom);
         maxCount = ks.length;
         asteroidCandidate = asteroidFrom;
     }

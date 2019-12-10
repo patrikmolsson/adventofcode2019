@@ -4,158 +4,169 @@
 type Coords = [number, number];
 type Direction = 'LEFT' | 'RIGHT';
 type K = {
-    distance: number;
-    direction: Direction;
-    slope: number;
-    coords: Coords;
+  distance: number;
+  angle: number;
+  coords: Coords;
 }
 
 const chars = {
-    ASTEROID: '#',
-    SHOT: 'z',
-    EMPTY: '.',
+  ASTEROID: '#',
+  SHOT: 'z',
+  EMPTY: '.',
 };
-const inputRaw = `.#..##.###...#######
-##.############..##.
-.#.######.########.#
-.###.#######.####.#.
-#####.##.#.##.###.##
-..#####..#.#########
-####################
-#.####....###.#.#.##
-##.#################
-#####.##.###..####..
-..######..##.#######
-####.##.####...##..#
-.#####..#.######.###
-##...#.##########...
-#.##########.#######
-.####.#.###.###.#.##
-....##.##.###..#####
-.#.#.###########.###
-#.#.#.#####.####.###
-###.##.####.##.#..##`;
+// const inputRaw = `.#..##.###...#######
+// ##.############..##.
+// .#.######.########.#
+// .###.#######.####.#.
+// #####.##.#.##.###.##
+// ..#####..#.#########
+// ####################
+// #.####....###.#.#.##
+// ##.#################
+// #####.##.###..####..
+// ..######..##.#######
+// ####.##.####...##..#
+// .#####..#.######.###
+// ##...#.##########...
+// #.##########.#######
+// .####.#.###.###.#.##
+// ....##.##.###..#####
+// .#.#.###########.###
+// #.#.#.#####.####.###
+// ###.##.####.##.#..##`;
+const inputRaw = `.............#..#.#......##........#..#
+.#...##....#........##.#......#......#.
+..#.#.#...#...#...##.#...#.............
+.....##.................#.....##..#.#.#
+......##...#.##......#..#.......#......
+......#.....#....#.#..#..##....#.......
+...................##.#..#.....#.....#.
+#.....#.##.....#...##....#####....#.#..
+..#.#..........#..##.......#.#...#....#
+...#.#..#...#......#..........###.#....
+##..##...#.#.......##....#.#..#...##...
+..........#.#....#.#.#......#.....#....
+....#.........#..#..##..#.##........#..
+........#......###..............#.#....
+...##.#...#.#.#......#........#........
+......##.#.....#.#.....#..#.....#.#....
+..#....#.###..#...##.#..##............#
+...##..#...#.##.#.#....#.#.....#...#..#
+......#............#.##..#..#....##....
+.#.#.......#..#...###...........#.#.##.
+........##........#.#...#.#......##....
+.#.#........#......#..........#....#...
+...............#...#........##..#.#....
+.#......#....#.......#..#......#.......
+.....#...#.#...#...#..###......#.##....
+.#...#..##................##.#.........
+..###...#.......#.##.#....#....#....#.#
+...#..#.......###.............##.#.....
+#..##....###.......##........#..#...#.#
+.#......#...#...#.##......#..#.........
+#...#.....#......#..##.............#...
+...###.........###.###.#.....###.#.#...
+#......#......#.#..#....#..#.....##.#..
+.##....#.....#...#.##..#.#..##.......#.
+..#........#.......##.##....#......#...
+##............#....#.#.....#...........
+........###.............##...#........#
+#.........#.....#..##.#.#.#..#....#....
+..............##.#.#.#...........#.....`
 const input = inputRaw.split('\n');
+
+let station: Coords = [26, 29];
 
 
 function mapAsteroids() {
-    const ast: Coords[] = [];
-    let rowIndex = 0;
-    for (const row of input) {
-        let colIndex = 0;
-        for (const char of row) {
-            if (char === chars.ASTEROID) {
-                ast.push([colIndex, rowIndex]);
-            }
-            colIndex += 1
-        }
-        rowIndex += 1;
+  const ast: Coords[] = [];
+  let rowIndex = 0;
+  for (const row of input) {
+    let colIndex = 0;
+    for (const char of row) {
+      if (char === chars.ASTEROID) {
+        ast.push([colIndex, rowIndex]);
+      }
+      colIndex += 1;
     }
+    rowIndex += 1;
+  }
 
-    return ast;
+  return ast;
 }
 
 let asteroids = mapAsteroids();
 
-function calculateK([fromX, fromY]: Coords, [toX, toY]: Coords): K {
-    const coords: Coords = [toX, toY];
-    const distance = Math.sqrt(Math.pow(fromX - toX, 2) + Math.pow(fromY - toY, 2));
-    let direction: Direction;
+function normalizeAngle(angle: number) {
+  if (angle < 0) {
+    return 2 * Math.PI + angle;
+  }
 
-    if (fromX < toX) {
-        direction = 'RIGHT';
-    } else if (fromX > toX) {
-        direction = 'LEFT';
-    } else {
-        direction = fromY < toY ? 'LEFT' : 'RIGHT';
-    }
-
-    if (fromX === toX) {
-        const slope = direction === 'RIGHT' ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER;
-        return { distance, direction, slope, coords };
-    }
-    if (fromY === toY) {
-        return { distance, direction, slope: 0, coords };
-    }
-
-    // This is wrong, but doesnt matter
-    const slope = (fromY - toY) / (fromX - toX);
-    return {
-        coords,
-        slope,
-        direction,
-        distance,
-    }
+  return angle;
 }
 
-let maxCount: number = -1;
-let station: Coords = [11, 13];
+function calculateK([fromX, fromY]: Coords, [toX, toY]: Coords): K {
+  const coords: Coords = [toX, toY];
+  const distX = toX - fromX;
+  const distY = toY - fromY;
+
+  const distance = Math.sqrt(Math.pow(distX, 2) + Math.pow(distY, 2));
+  let angle = Math.atan2(distY, distX);
+
+  angle = normalizeAngle(angle);
+
+  return {
+    angle,
+    coords,
+    distance,
+  };
+}
 
 function getClosestAsteroids() {
-    let ks: K[] = [];
+  let ks: K[] = [];
 
-    for (const asteroidTo of asteroids) {
-        if (station[0] === asteroidTo[0] && station[1] === asteroidTo[1]) {
-            continue;
-        }
-
-        const k = calculateK(station, asteroidTo);
-
-        const existingKsIndex = ks.findIndex(existingK => existingK.direction === k.direction && existingK.slope === k.slope);
-        if (existingKsIndex > -1) {
-            if (k.distance < ks[existingKsIndex].distance) {
-                ks[existingKsIndex] = k;
-            }
-
-            continue;
-        }
-
-        ks.push(k);
+  for (const asteroidTo of asteroids) {
+    if (station[0] === asteroidTo[0] && station[1] === asteroidTo[1]) {
+      continue;
     }
 
-    return ks;
+    const k = calculateK(station, asteroidTo);
+
+    const asteroidAtExistingAngleIndex = ks.findIndex(existingK => existingK.angle === k.angle);
+    if (asteroidAtExistingAngleIndex > -1) {
+      if (k.distance < ks[asteroidAtExistingAngleIndex].distance) {
+        ks[asteroidAtExistingAngleIndex] = k;
+      }
+    } else {
+      ks.push(k);
+    }
+  }
+
+  return ks;
 }
 
 let shotAsteroids = 0;
-let lastShotDirection = {
-    direction: 'RIGHT',
-    slope: Number.MAX_SAFE_INTEGER,
-}
+// Dummy
+let angleDiff = 0.000001;
+let lastShotAngle = 1.5 * Math.PI - angleDiff;
 
 while (shotAsteroids < 200) {
-    const closestAsteroids = getClosestAsteroids();
+  console.log(lastShotAngle);
+  const closestAsteroids = getClosestAsteroids();
 
-    console.log(closestAsteroids.length);
+  closestAsteroids.sort((a, b) => {
+    const angleToA = normalizeAngle(a.angle - lastShotAngle);
+    const angleToB = normalizeAngle(b.angle - lastShotAngle);
 
-    closestAsteroids.sort((a, b) => {
-        if (a.direction !== b.direction) {
-            // Rights are lower index
-            return a.direction === 'RIGHT' ? -1 : 1;
-        }
+    return angleToA - angleToB;
+  });
+  // console.log(closestAsteroids);
+  const shotAsteroid = closestAsteroids[0];
 
+  asteroids = asteroids.filter(a => a[0] !== shotAsteroid.coords[0] || a[1] !== shotAsteroid.coords[1]);
 
-        // Both have right
-        if (a.direction === 'RIGHT') {
-            // The biggest slope first 
-            return a.slope > b.slope ? -1 : 1;
-        }
-        // Both have left
-        if (a.direction === 'LEFT') {
-            // The smallest slope first 
-            return a.slope < b.slope ? -1 : 1;
-        }
+  lastShotAngle = shotAsteroid.angle + angleDiff;
+  shotAsteroids += 1;
 
-        throw new Error('Should never happen');
-    });
-
-    const shotAsteroid = closestAsteroids[0];
-
-    console.log(asteroids.length);
-
-    asteroids = asteroids.filter(a => a[0] !== shotAsteroid.coords[0] || a[1] !== shotAsteroid.coords[1]);
-
-    console.log(asteroids.length);
-    shotAsteroids += 1;
-
-    console.log('Shot asteroid', shotAsteroid, 'as #', shotAsteroids);
+  console.log('Shot asteroid', shotAsteroid, 'as #', shotAsteroids);
 }
