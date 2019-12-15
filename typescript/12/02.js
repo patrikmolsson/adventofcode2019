@@ -1,3 +1,4 @@
+const fs = require('fs');
 // const moons: Moon[] = [
 //     {
 //         pos: { x: -1, y: 0, z: 2 },
@@ -16,7 +17,26 @@
 //         vel: { x: 0, y: 0, z: 0 },
 //     },
 // ]
-const previousStates = {};
+// LONG EXAMPLE
+// const moons: Moon[] = [
+//   {
+//     pos: {x: -8, y: -10, z: 0},
+//     vel: {x: 0, y: 0, z: 0},
+//   },
+//   {
+//     pos: {x: 5, y: 5, z: 10},
+//     vel: {x: 0, y: 0, z: 0},
+//   },
+//   {
+//     pos: {x: 2, y: -7, z: 3},
+//     vel: {x: 0, y: 0, z: 0},
+//   },
+//   {
+//     pos: {x: 9, y: -8, z: -3},
+//     vel: {x: 0, y: 0, z: 0},
+//   },
+// ];
+// REAL DATA:
 const moons = [
     {
         pos: { x: 17, y: -9, z: 4 },
@@ -35,6 +55,7 @@ const moons = [
         vel: { x: 0, y: 0, z: 0 },
     },
 ];
+const moonsCopies = JSON.parse(JSON.stringify(moons));
 // <x=17, y=-9, z=4>
 // <x=2, y=2, z=-13>
 // <x=-1, y=5, z=-1>
@@ -89,18 +110,60 @@ function getMoonState(moon) {
 function getUniverseState() {
     return moons.reduce((acc, moon) => `${acc}${getMoonState(moon)}`, '');
 }
-const maxSteps = 10000000000000;
-let step = 1;
-for (; step <= maxSteps; step += 1) {
-    updateVelocities();
-    updatePositions();
-    const state = getUniverseState();
-    if (previousStates[state]) {
-        break;
-    }
-    previousStates[state] = 1;
-    if (step % 100000 === 0) {
-        console.log(step);
-    }
+function getMaxAbsPosOfMoon(moon) {
+    return Math.max(Math.abs(moon.pos.x), Math.abs(moon.pos.y), Math.abs(moon.pos.z));
 }
-console.log(step - 1);
+function getMaxAbsPos() {
+    return Math.max(maxAbsPos, getMaxAbsPosOfMoon(moons[0]), getMaxAbsPosOfMoon(moons[1]), getMaxAbsPosOfMoon(moons[2]), getMaxAbsPosOfMoon(moons[3]));
+}
+function moonComparer(a, b, property) {
+    if (a.pos[property] !== b.pos[property]) {
+        return false;
+    }
+    if (a.vel[property] !== b.vel[property]) {
+        return false;
+    }
+    return true;
+}
+function isInitialState(property) {
+    for (let i = 0; i < moons.length; i += 1) {
+        if (!moonComparer(moons[i], moonsCopies[i], property)) {
+            return false;
+        }
+    }
+    return true;
+}
+const maxSteps = Number.MAX_SAFE_INTEGER;
+// const maxSteps = 500000;
+let maxAbsPos = 0;
+function run() {
+    let step = 1;
+    for (; step <= maxSteps; step += 1) {
+        updateVelocities();
+        updatePositions();
+        // const state = calculateEnergy();
+        // const currentMaxAbsPos = getMaxAbsPos();
+        // if (currentMaxAbsPos > maxAbsPos) {
+        //   maxAbsPos = currentMaxAbsPos;
+        //   console.log('maxabspos', maxAbsPos);
+        // }
+        // const hasState = previousEnergies[state];
+        // if (hasState) {
+        //   duplicateEnergies[state] = true;
+        // }
+        // previousEnergies[state] = true;
+        if (isInitialState('x')) {
+            break;
+        }
+    }
+    console.log(step);
+}
+// LONG EXAMPLE
+// const xPeriodicity = 2028;
+// const yPeriodicity = 5898;
+// const zPeriodicity = 4702;
+// REAL DATA
+const xPeriodicity = 231613;
+const yPeriodicity = 96236;
+const zPeriodicity = 193052;
+run();
